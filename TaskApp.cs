@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Text.Json;
 
 namespace TaskManager
 {
     public static class TaskApp
     {
-        private static readonly List<TaskItem> tasks = [];
+        private static List<TaskItem> tasks = [];
         private static int nextId = 1;
         private const int headerLines = 2;
+        private const string DataFile = "tasks.json";
 
         public static void Run()
         {
@@ -36,6 +36,8 @@ namespace TaskManager
             Console.WriteLine("2. Отметить выполненной");
             Console.WriteLine("3. Удалить задачу");
             Console.WriteLine("4. Показать все задачи");
+            Console.WriteLine("5. Сохранить задачи в файл");
+            Console.WriteLine("6. Загрузить задачи из файла");
             Console.WriteLine("Q. Выход");
             Console.Write("Выбор: ");
         }
@@ -56,6 +58,12 @@ namespace TaskManager
                 case ConsoleKey.D4:
                     ListTasks();
                     break;
+                case ConsoleKey.D5:
+                    SaveTasks();
+                break;
+                case ConsoleKey.D6:
+                    LoadTasks();
+                break;
                 case ConsoleKey.Q:
                     Environment.Exit(0);
                     break;
@@ -105,6 +113,40 @@ namespace TaskManager
                 Console.WriteLine($"[{(t.IsCompleted ? 'x' : ' ')}] {t.Id}: {t.Description}");
             Console.WriteLine("\nНажмите любую клавишу для возврата...");
             Console.ReadKey(true);
+        }
+
+        private static void SaveTasks()
+        {
+            try
+            {
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(tasks, options);
+                File.WriteAllText(DataFile, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка сохранения: {ex.Message}");
+            }
+        }
+
+        private static void LoadTasks()
+        {
+            if (!File.Exists(DataFile)) return;
+            try
+            {
+                string json = File.ReadAllText(DataFile);
+                var loaded = JsonSerializer.Deserialize<List<TaskItem>>(json);
+                if (loaded != null)
+                {
+                    tasks = loaded;
+                    nextId = tasks.Count > 0 ? tasks[^1].Id + 1 : 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+                tasks = [];
+            }
         }
     }
 }

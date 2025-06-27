@@ -1,9 +1,18 @@
 ﻿namespace TaskManager
 {
-    public class TaskItem(int id, string desc)
+    public class TaskItem
     {
-        public int Id { get; set; } = id;
-        public string Description { get; set; } = desc;
-        public bool IsCompleted { get; set; } = false;
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public bool IsCompleted { get; set; }
+
+        public TaskItem() { }
+
+        public TaskItem(int id, string desc)
+        {
+            Id = id;
+            Description = desc;
+            IsCompleted = false;
+        }
     }
 }
