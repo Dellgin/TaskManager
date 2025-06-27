@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace TaskManager
 {
@@ -27,7 +28,7 @@ namespace TaskManager
             int total = tasks.Count;
             int done = tasks.FindAll(t => t.IsCompleted).Count;
             Console.WriteLine($"Всего задач: {total} | Выполнено: {done}");
-            Console.WriteLine(new string('-', 30));
+            Console.WriteLine(new string('-', 40));
         }
 
         private static void ShowMenu()
@@ -47,26 +48,19 @@ namespace TaskManager
             switch (key.Key)
             {
                 case ConsoleKey.D1:
-                    AddTask();
-                    break;
+                    AddTask(); SaveTasks(); break;
                 case ConsoleKey.D2:
-                    MarkCompleted();
-                    break;
+                    MarkCompleted(); SaveTasks(); break;
                 case ConsoleKey.D3:
-                    DeleteTask();
-                    break;
+                    DeleteTask(); SaveTasks(); break;
                 case ConsoleKey.D4:
-                    ListTasks();
-                    break;
+                    ListTasksWithSorting(); break;
                 case ConsoleKey.D5:
-                    SaveTasks();
-                break;
+                    SaveTasks(); break;
                 case ConsoleKey.D6:
-                    LoadTasks();
-                break;
+                    LoadTasks(); break;
                 case ConsoleKey.Q:
-                    Environment.Exit(0);
-                    break;
+                    SaveTasks(); Environment.Exit(0); break;
             }
         }
 
@@ -91,8 +85,7 @@ namespace TaskManager
             if (int.TryParse(Console.ReadLine(), out int id))
             {
                 var task = tasks.Find(t => t.Id == id);
-                if (task != null)
-                    task.IsCompleted = true;
+                if (task != null) task.IsCompleted = true;
             }
         }
 
@@ -105,12 +98,32 @@ namespace TaskManager
             }
         }
 
-        private static void ListTasks()
+        private static void ListTasksWithSorting()
         {
             Console.Clear();
+            Console.WriteLine("Выберите сортировку:");
+            Console.WriteLine("1 - По статусу (невыполненные сверху)");
+            Console.WriteLine("2 - По ID");
+            Console.WriteLine("3 - По дате создания");
+            Console.Write("Выбор: ");
+            var key = Console.ReadKey(true).Key;
+            IEnumerable<TaskItem> sorted = tasks;
+            switch (key)
+            {
+                case ConsoleKey.D1:
+                    sorted = tasks.OrderBy(t => t.IsCompleted).ThenBy(t => t.Id);
+                    break;
+                case ConsoleKey.D2:
+                    sorted = tasks.OrderBy(t => t.Id);
+                    break;
+                case ConsoleKey.D3:
+                    sorted = tasks.OrderBy(t => t.CreatedAt);
+                    break;
+            }
+            Console.Clear();
             Console.WriteLine("Список задач:");
-            foreach (var t in tasks)
-                Console.WriteLine($"[{(t.IsCompleted ? 'x' : ' ')}] {t.Id}: {t.Description}");
+            foreach (var t in sorted)
+                Console.WriteLine($"[{(t.IsCompleted ? 'x' : ' ')}] {t.Id}: {t.Description} (Создано: {t.CreatedAt:g})");
             Console.WriteLine("\nНажмите любую клавишу для возврата...");
             Console.ReadKey(true);
         }
@@ -119,7 +132,11 @@ namespace TaskManager
         {
             try
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
                 string json = JsonSerializer.Serialize(tasks, options);
                 File.WriteAllText(DataFile, json);
             }
