@@ -100,7 +100,7 @@ namespace TaskManager
 
         private static void ListTasksWithSorting()
         {
-            Console.Clear();
+            Render();
             Console.WriteLine("Выберите сортировку:");
             Console.WriteLine("1 - По статусу (невыполненные сверху)");
             Console.WriteLine("2 - По ID");
@@ -120,7 +120,7 @@ namespace TaskManager
                     sorted = tasks.OrderBy(t => t.CreatedAt);
                     break;
             }
-            Console.Clear();
+            Render();
             Console.WriteLine("Список задач:");
             foreach (var t in sorted)
                 Console.WriteLine($"[{(t.IsCompleted ? 'x' : ' ')}] {t.Id}: {t.Description} (Создано: {t.CreatedAt:g})");
